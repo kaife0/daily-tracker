@@ -97,47 +97,21 @@ export default function GoalCard({ goal }: GoalCardProps) {
   const handleSubmitMilestone = (event: React.FormEvent) => {
     event.preventDefault();
     if (newMilestone.trim()) {
-      // When adding a new milestone, adjust progress
-      const updatedGoal = {...goal};
-      const totalMilestonesCount = updatedGoal.milestones.length + 1; // +1 for the new milestone
-      const completedMilestonesCount = updatedGoal.milestones.filter(m => m.completed).length;
-      
-      // Calculate new progress based on milestone completion rate
-      const newProgress = Math.max(
-        Math.round((completedMilestonesCount / totalMilestonesCount) * 100), 
-        updatedGoal.progress
-      );
-      
+      // Simply add the milestone - the context will handle the state updates
       addMilestone(goal.id, newMilestone);
-      updateProgress(goal.id, newProgress);
       setNewMilestone('');
+      
+      // Automatically expand the milestones section if it's collapsed
+      if (!expandMilestones) {
+        setExpandMilestones(true);
+      }
     }
   };
 
   const handleToggleMilestone = (goalId: string, milestoneId: string) => {
-    // Find the milestone in the goal object
-    const milestone = goal.milestones.find(m => m.id === milestoneId);
-    if (!milestone) return;
-
-    // Toggle milestone status
-    const willBeCompleted = !milestone.completed;
-    
-    // Call the toggle function
+    // Call the toggle function directly without manual recalculation
+    // The context's toggleMilestone function handles all the state updates
     toggleMilestone(goalId, milestoneId);
-    
-    // Calculate new progress after toggling
-    const totalMilestones = goal.milestones.length;
-    // Anticipate the future state after toggling
-    let completedMilestones = goal.milestones.filter(m => m.completed).length;
-    if (willBeCompleted) {
-      completedMilestones += 1;
-    } else {
-      completedMilestones -= 1;
-    }
-    
-    // Update progress based on milestone completion
-    const newProgress = Math.round((completedMilestones / totalMilestones) * 100);
-    updateProgress(goalId, newProgress);
   };
 
   const handleEditComment = (comment: Comment) => {
@@ -206,18 +180,9 @@ export default function GoalCard({ goal }: GoalCardProps) {
 
   const confirmDeleteMilestone = () => {
     if (milestoneToDelete) {
+      // Simply call the deleteMilestone function
+      // No need to manually recalculate progress - we'll fix that in the context
       deleteMilestone(goal.id, milestoneToDelete);
-      
-      // Recalculate progress after deleting milestone
-      const remainingMilestones = goal.milestones.filter(m => m.id !== milestoneToDelete);
-      const totalCount = remainingMilestones.length;
-      const completedCount = remainingMilestones.filter(m => m.completed).length;
-      
-      if (totalCount > 0) {
-        const newProgress = Math.round((completedCount / totalCount) * 100);
-        updateProgress(goal.id, newProgress);
-      }
-      
       setDeleteMilestoneConfirmOpen(false);
       setMilestoneToDelete(null);
     }
@@ -273,7 +238,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
           overflow: 'visible'
         }}
       >
-        {completedMilestones > 0 && totalMilestones > 0 && completedMilestones === totalMilestones && (
+        {goal.progress === 100 && (
           <Chip
             icon={<EmojiEvents />}
             label="Completed"
@@ -288,42 +253,28 @@ export default function GoalCard({ goal }: GoalCardProps) {
         )}
 
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Typography variant="h5" component="div" gutterBottom>
-              {goal.title}
-            </Typography>
-            <IconButton aria-label="settings" onClick={handleMenuClick}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ width: 'calc(100% - 48px)' }}>
+              <Typography variant="h5" component="div" sx={{ mb: 1, pr: 2 }} noWrap>
+                {goal.title}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {goal.teamId ? (
+                  <Chip label="Team Goal" color="info" size="small" />
+                ) : (
+                  <Chip label="Personal Goal" color="default" size="small" />
+                )}
+              </Box>
+            </Box>
+            <IconButton 
+              aria-label="settings" 
+              onClick={handleMenuClick}
+              sx={{ alignSelf: 'flex-start' }}
+            >
               <MoreVert />
             </IconButton>
-            <Menu
-              id="goal-menu"
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={openEditGoalDialog}>
-                <Edit fontSize="small" sx={{ mr: 1 }} /> Edit Goal
-              </MenuItem>
-              <MenuItem>
-                <Box component="form" sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="body2" sx={{ mr: 1 }}>Progress:</Typography>
-                  <TextField
-                    size="small"
-                    type="number"
-                    value={progress}
-                    inputProps={{ min: 0, max: 100 }}
-                    onChange={(e) => setProgress(Number(e.target.value))}
-                    sx={{ width: 70, mr: 1 }}
-                  />
-                  <Button size="small" onClick={handleUpdateProgress}>Update</Button>
-                </Box>
-              </MenuItem>
-              <MenuItem onClick={handleDeleteGoal}>
-                <Delete fontSize="small" sx={{ mr: 1 }} /> Delete Goal
-              </MenuItem>
-            </Menu>
           </Box>
-
+          
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {goal.description}
           </Typography>
@@ -353,6 +304,42 @@ export default function GoalCard({ goal }: GoalCardProps) {
               }}
             />
           </Box>
+          
+          <Menu
+            id="goal-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={openEditGoalDialog}>
+              <Edit fontSize="small" sx={{ mr: 1 }} /> Edit Goal
+            </MenuItem>
+            <MenuItem>
+              <Box component="form" sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ mr: 1 }}>Progress:</Typography>
+                <TextField
+                  size="small"
+                  type="number"
+                  value={progress}
+                  inputProps={{ min: 0, max: 100 }}
+                  onChange={(e) => setProgress(Number(e.target.value))}
+                  sx={{ width: 70, mr: 1 }}
+                />
+                <Button size="small" onClick={handleUpdateProgress}>Update</Button>
+              </Box>
+            </MenuItem>
+            <MenuItem onClick={handleDeleteGoal}>
+              <Delete fontSize="small" sx={{ mr: 1 }} /> Delete Goal
+            </MenuItem>
+          </Menu>
 
           {/* Milestones Section */}
           <Box sx={{ mb: 2 }}>
@@ -431,7 +418,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
                         <ListItemIcon>
                           <Checkbox
                             edge="start"
-                            checked={milestone.completed}
+                            checked={goal.milestones.find(m => m.id === milestone.id)?.completed || false}
                             onChange={() => handleToggleMilestone(goal.id, milestone.id)}
                             color="primary"
                           />

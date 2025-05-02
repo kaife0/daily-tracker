@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { 
   AppBar, 
@@ -10,11 +10,16 @@ import {
   Container, 
   Button, 
   MenuItem,
+  TextField,
+  InputAdornment,
   useTheme,
   useMediaQuery
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
+import AccountCircle from '@mui/icons-material/AccountCircle';
 import { motion } from 'framer-motion';
+
+const USER_NAME_KEY = 'dailyTracker_userName';
 
 const navigation = [
   { name: 'Dashboard', path: '/dashboard' },
@@ -24,9 +29,15 @@ const navigation = [
 
 export default function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
+  const [userName, setUserName] = useState<string>('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+
+  useEffect(() => {
+    const storedName = localStorage.getItem(USER_NAME_KEY);
+    if (storedName) setUserName(storedName);
+  }, []);
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -34,6 +45,11 @@ export default function Navbar() {
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
+  };
+
+  const handleUserNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserName(e.target.value);
+    localStorage.setItem(USER_NAME_KEY, e.target.value);
   };
 
   // Check if the current route matches the nav item path
@@ -191,9 +207,6 @@ export default function Navbar() {
               </motion.div>
             ))}
           </Box>
-
-          {/* Empty box for spacing */}
-          <Box sx={{ flexGrow: 0 }} />
         </Toolbar>
       </Container>
     </AppBar>

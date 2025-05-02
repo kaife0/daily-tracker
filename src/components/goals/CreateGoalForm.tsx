@@ -11,15 +11,24 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Typography
+  Typography,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Checkbox,
+  Paper
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { Add } from '@mui/icons-material';
+import { Add, Delete } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useGoals } from '../../context/GoalContext';
+import { Milestone } from '../../types';
 
 interface CreateGoalFormProps {
   open: boolean;
@@ -32,20 +41,69 @@ export default function CreateGoalForm({ open, onClose }: CreateGoalFormProps) {
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState<Date | null>(new Date());
   const [goalType, setGoalType] = useState('personal'); // 'personal' or 'team'
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [newMilestone, setNewMilestone] = useState('');
+
+  const handleAddMilestone = () => {
+    if (newMilestone.trim()) {
+      const milestone: Milestone = {
+        id: uuidv4(),
+        title: newMilestone,
+        completed: false,
+        goalId: 'temp', // Will be replaced when goal is created
+      };
+      setMilestones([...milestones, milestone]);
+      setNewMilestone('');
+    }
+  };
+
+  const handleRemoveMilestone = (id: string) => {
+    setMilestones(milestones.filter(milestone => milestone.id !== id));
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (title && description && targetDate) {
+      // Calculate initial progress if milestones exist
+      let initialProgress = 0;
+      if (milestones.length > 0) {
+        const completedCount = milestones.filter(m => m.completed).length;
+        initialProgress = Math.round((completedCount / milestones.length) * 100);
+      }
+      
+      // Create the goal with milestones
+      const goalId = uuidv4();
+      const goalMilestones = milestones.map(m => ({
+        ...m,
+        goalId: goalId
+      }));
+      
       addGoal({
+        id: goalId, // Pre-generate ID so milestones can reference it
         title,
         description,
-        progress: 0,
+        progress: initialProgress,
         targetDate,
+        milestones: goalMilestones,
         createdBy: 'Current User', // In a real app, get actual user info
         teamId: goalType === 'team' ? 'team-1' : undefined, // In a real app, get actual team info
       });
+      
       handleClose();
     }
+  };
+
+  const handleMilestoneToggle = (id: string) => {
+    setMilestones(milestones.map(milestone => {
+      if (milestone.id === id) {
+        return {
+          ...milestone,
+          completed: !milestone.completed,
+          completedAt: !milestone.completed ? new Date() : undefined
+        };
+      }
+      return milestone;
+    }));
   };
 
   const handleClose = () => {
@@ -53,6 +111,8 @@ export default function CreateGoalForm({ open, onClose }: CreateGoalFormProps) {
     setDescription('');
     setTargetDate(new Date());
     setGoalType('personal');
+    setMilestones([]);
+    setNewMilestone('');
     onClose();
   };
 
@@ -134,6 +194,64 @@ export default function CreateGoalForm({ open, onClose }: CreateGoalFormProps) {
                 }}
               />
             </LocalizationProvider>
+          </Box>
+          
+          {/* Milestones Section */}
+          <Box sx={{ my: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Milestones
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Add key steps to accomplish this goal
+            </Typography>
+            
+            <Box sx={{ display: 'flex', mb: 2 }}>
+              <TextField
+                size="small"
+                placeholder="Add a milestone"
+                variant="outlined"
+                fullWidth
+                value={newMilestone}
+                onChange={(e) => setNewMilestone(e.target.value)}
+                sx={{ mr: 1 }}
+              />
+              <Button 
+                variant="outlined" 
+                onClick={handleAddMilestone}
+                disabled={!newMilestone.trim()}
+              >
+                <Add />
+              </Button>
+            </Box>
+            
+            {milestones.length > 0 && (
+              <Paper variant="outlined" sx={{ mt: 2 }}>
+                <List disablePadding>
+                  {milestones.map((milestone, index) => (
+                    <>
+                      {index > 0 && <Divider />}
+                      <ListItem 
+                        key={milestone.id} 
+                        secondaryAction={
+                          <IconButton edge="end" onClick={() => handleRemoveMilestone(milestone.id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        }
+                      >
+                        <Checkbox
+                          edge="start"
+                          checked={milestone.completed}
+                          onChange={() => handleMilestoneToggle(milestone.id)}
+                          tabIndex={-1}
+                          disableRipple
+                        />
+                        <ListItemText primary={milestone.title} />
+                      </ListItem>
+                    </>
+                  ))}
+                </List>
+              </Paper>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

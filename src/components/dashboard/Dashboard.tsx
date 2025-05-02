@@ -36,7 +36,6 @@ import {
   BarChart as BarChartIcon,
   Timeline as TimelineIcon,
   Delete as DeleteIcon,
-  Restore as RestoreIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
@@ -50,10 +49,10 @@ import {
 import { useGoals } from '../../context/GoalContext';
 
 export default function Dashboard() {
-  const { goals, clearAllData, resetToSampleData, hasSampleData } = useGoals();
+  const { goals, clearAllData } = useGoals();
   const navigate = useNavigate();
   const [chartView, setChartView] = useState<string>('goals');
-  const [openDialog, setOpenDialog] = useState<'clear' | 'reset' | null>(null);
+  const [openDialog, setOpenDialog] = useState<'clear' | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -177,7 +176,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleOpenDialog = (type: 'clear' | 'reset') => {
+  const handleOpenDialog = (type: 'clear') => {
     setOpenDialog(type);
   };
 
@@ -187,11 +186,6 @@ export default function Dashboard() {
 
   const handleClearData = () => {
     clearAllData();
-    handleCloseDialog();
-  };
-
-  const handleResetData = () => {
-    resetToSampleData();
     handleCloseDialog();
   };
 
@@ -220,16 +214,6 @@ export default function Dashboard() {
           width: { xs: '100%', sm: 'auto' },
           justifyContent: { xs: 'space-between', sm: 'flex-end' }
         }}>
-          <Button 
-            variant="outlined"
-            onClick={() => handleOpenDialog('reset')}
-            size={isMobile ? "small" : "medium"}
-            startIcon={<RestoreIcon />}
-            color="primary"
-            sx={{ borderRadius: 2 }}
-          >
-            Reset Data
-          </Button>
           <Button 
             variant="outlined"
             onClick={() => handleOpenDialog('clear')}
@@ -895,7 +879,7 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Confirmation Dialogs */}
+      {/* Confirmation Dialog */}
       <Dialog
         open={openDialog === 'clear'}
         onClose={handleCloseDialog}
@@ -912,26 +896,6 @@ export default function Dashboard() {
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleClearData} color="error" autoFocus>
             Clear All Data
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={openDialog === 'reset'}
-        onClose={handleCloseDialog}
-        aria-labelledby="reset-dialog-title"
-        aria-describedby="reset-dialog-description"
-      >
-        <DialogTitle id="reset-dialog-title">Reset to Sample Data?</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="reset-dialog-description">
-            This will replace your current data with sample goals data. Any existing goals will be lost.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleResetData} color="primary" autoFocus>
-            Reset Data
           </Button>
         </DialogActions>
       </Dialog>
