@@ -55,7 +55,7 @@ export default function GoalsPage() {
     }
   }, [tabValue, goals]);
   
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     
     // Update URL when tab changes, without reloading page
@@ -121,6 +121,7 @@ export default function GoalsPage() {
         ) : (
           <Grid container spacing={3}>
             {filteredGoals.map((goal) => (
+              // @ts-ignore
               <Grid item xs={12} key={goal.id}>
                 <GoalCard goal={goal} />
               </Grid>

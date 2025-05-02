@@ -1,43 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { 
-  AppBar, 
-  Box, 
-  Toolbar, 
-  IconButton, 
-  Typography, 
-  Menu, 
-  Container, 
-  Button, 
-  MenuItem,
-  TextField,
-  InputAdornment,
-  useTheme,
-  useMediaQuery
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  Container,
+  Button,
+  MenuItem
 } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
+import { 
+  Menu as MenuIcon
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
-
-const USER_NAME_KEY = 'dailyTracker_userName';
-
-const navigation = [
-  { name: 'Dashboard', path: '/dashboard' },
-  { name: 'My Goals', path: '/goals' },
-  { name: 'Team Goals', path: '/goals?tab=team' }
-];
 
 export default function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
-  const [userName, setUserName] = useState<string>('');
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Define navigation items
+  const navigation = [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'My Goals', path: '/goals' },
+    { name: 'Team Goals', path: '/goals?tab=team' }
+  ];
 
   useEffect(() => {
-    const storedName = localStorage.getItem(USER_NAME_KEY);
-    if (storedName) setUserName(storedName);
-  }, []);
+    // Location change handler
+  }, [location.pathname]);
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -47,9 +40,9 @@ export default function Navbar() {
     setAnchorElNav(null);
   };
 
-  const handleUserNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserName(e.target.value);
-    localStorage.setItem(USER_NAME_KEY, e.target.value);
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    handleCloseNavMenu();
   };
 
   // Check if the current route matches the nav item path
@@ -134,9 +127,7 @@ export default function Navbar() {
               {navigation.map((item) => (
                 <MenuItem 
                   key={item.name} 
-                  onClick={handleCloseNavMenu}
-                  component={RouterLink}
-                  to={item.path}
+                  onClick={() => handleNavigation(item.path)}
                   selected={isActive(item.path)}
                 >
                   <Typography textAlign="center">{item.name}</Typography>

@@ -24,7 +24,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Add, Delete } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useGoals } from '../../context/GoalContext';
@@ -122,12 +121,8 @@ export default function CreateGoalForm({ open, onClose }: CreateGoalFormProps) {
       onClose={handleClose}
       fullWidth
       maxWidth="sm"
-      PaperComponent={motion.div}
       PaperProps={{
-        initial: { y: 50, opacity: 0 },
-        animate: { y: 0, opacity: 1 },
-        transition: { duration: 0.3 },
-        style: { 
+        sx: { 
           backgroundColor: '#ffffff',
           borderRadius: '12px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)'
